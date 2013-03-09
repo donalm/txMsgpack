@@ -24,7 +24,6 @@ elif _platform == "win32":
 import string
 import random
 import time
-import msgpackrpc
 
 from twisted.python import failure
 from twisted.internet import defer
