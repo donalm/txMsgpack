@@ -279,6 +279,14 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
     def closeConnection(self):
         self.transport.loseConnection()
 
+    def remote_echo(self, value, msgid=None):
+        """
+        Provided to serve unit tests
+        """
+        df = defer.Deferred()
+        df.callback(value)
+        return df
+
 
 class MsgpackServerFactory(protocol.Factory):
     protocol = Msgpack
