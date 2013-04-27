@@ -46,7 +46,7 @@ def compare(result, item):
 def done(res, start_time):
     duration = time.time() - start_time
     print "Completed %s iterations in : %ss" % (ITERATIONS, duration)
-    print "Average requests/s: %s" % (ITERATIONS / duration,)
+    print "Average transactions/s: %s" % (ITERATIONS / duration,)
     reactor.stop()
 
 def word(l):
