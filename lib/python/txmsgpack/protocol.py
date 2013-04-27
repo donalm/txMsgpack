@@ -245,13 +245,13 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
 
         try:
             df  = self.getDeferredForMethod(msgid, methodName, params)
+            df.addBoth(self.notificationCallback)
         except Exception, e:
             # Log the error - there's no way to return it for a notification
             print e
             return
 
-        df.addBoth(self.notificationCallback)
-        return df
+        return None
 
     def notificationCallback(self, result):
         # Log the result if required
