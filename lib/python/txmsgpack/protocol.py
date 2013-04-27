@@ -107,7 +107,7 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
             raise MsgpackError("Request with msgid '%s' already exists" % (msgid,), errno.EALREADY)
 
         try:
-            df  = self.getDeferredForMethod(msgid, methodName, params)
+            result = self.callRemoteMethod(msgid, methodName, params)
         except Exception, e:
             if self._sendErrors:
                 f = failure.Failure()
@@ -116,11 +116,14 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
                 f  = failure.Failure(exc_value=ex)
             return self.respondErrback(f, msgid)
 
-        self._incoming_requests[msgid] = df
-        df.addCallback(self.respondCallback, msgid)
-        df.addErrback(self.respondErrback, msgid)
-        df.addBoth(self.endRequest, msgid)
-        return df
+        try:
+            result.addCallback(self.respondCallback, msgid)
+            result.addErrback(self.respondErrback, msgid)
+            result.addBoth(self.endRequest, msgid)
+            self._incoming_requests[msgid] = result
+            return result
+        except AttributeError, e:
+            return self.respondCallback(result, msgid)
 
     def getCallableForMethodName(self, methodName):
         try:
@@ -130,7 +133,7 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
                 raise
             raise MsgpackError("Client attempted to call unimplemented method: remote_%" % (methodName,), errno.ENOSYS)
 
-    def getDeferredForMethod(self, msgid, methodName, params):
+    def callRemoteMethod(self, msgid, methodName, params):
         try:
             method = self.getCallableForMethodName(methodName)
         except Exception, e:
@@ -153,9 +156,9 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
 
         try:
             if send_msgid:
-                df = method(*params, msgid=msgid)
+                result = method(*params, msgid=msgid)
             else:
-                df = method(*params)
+                result = method(*params)
         except TypeError, e:
             if self._sendErrors:
                 raise
@@ -165,7 +168,7 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
                 raise
             raise MsgpackError("Unexpected error calling %s" % (methodName), 0)
 
-        return df
+        return result
 
     def endRequest(self, result, msgid):
         if msgid in self._incoming_requests:
@@ -244,8 +247,11 @@ class Msgpack(protocol.Protocol, policies.TimeoutMixin):
             return
 
         try:
-            df  = self.getDeferredForMethod(msgid, methodName, params)
-            df.addBoth(self.notificationCallback)
+            result = self.callRemoteMethod(msgid, methodName, params)
+            try:
+                result.addBoth(self.notificationCallback)
+            except AttributeError, e:
+                self.notificationCallback(result)
         except Exception, e:
             # Log the error - there's no way to return it for a notification
             print e
