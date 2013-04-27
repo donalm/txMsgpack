@@ -1,0 +1,4 @@
+*.pyc
+.gitignore
+*.swp
+_trial_temp
