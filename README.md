@@ -2,6 +2,8 @@ txMsgpack
 =========
 
 
+*This library is unmaintained - a better alternative may be https://github.com/jakm/txmsgpackrpc 
+
 *For the latest source code, see <http://github.com/donalm/txMsgpack>*
 
 
